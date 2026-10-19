@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CanchaYa | Reservas de Fútbol 5 y 7</title>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="styles.css">
+</head>
+
+<body>
+
+    <!-- =========================================================
+         PANTALLA DE ACCESO: LOGIN Y REGISTRO
+         ========================================================= -->
+    <div id="auth-screen" class="auth-screen">
+        <div class="auth-box">
+
+            <div class="brand-large">
+                ⚽ <strong>CanchaYa</strong>
+            </div>
+
+            <p class="muted">
+                Sistema de reservas de canchas de Fútbol 5 y Fútbol 7.
+            </p>
+
+            <div class="auth-tabs">
+                <button id="login-tab" class="tab active" onclick="authTab('login')">
+                    Iniciar sesión
+                </button>
+
+                <button id="register-tab" class="tab" onclick="authTab('register')">
+                    Crear cuenta
+                </button>
+            </div>
+
+            <!-- LOGIN -->
+            <div id="login-form">
+
+                <label>Correo electrónico</label>
+                <input id="login-email"
+                       type="email"
+                       placeholder="tu@email.com">
+
+                <label>Contraseña</label>
+                <input id="login-password"
+                       type="password"
+                       placeholder="Contraseña">
+
+                <button class="primary full" onclick="login()">
+                    Ingresar
+                </button>
+
+                <p id="login-msg"></p>
+
+                
+
+            </div>
+
+            <!-- REGISTRO -->
+            <div id="register-form" class="hidden">
+
+                <div class="twocol">
+                    <div>
+                        <label>Nombre</label>
+                        <input id="r-nombre"
+                               type="text"
+                               placeholder="Ej.: Carlos">
+                    </div>
+
+                    <div>
+                        <label>Apellido</label>
+                        <input id="r-apellido"
+                               type="text"
+                               placeholder="Ej.: Suárez">
+                    </div>
+                </div>
+
+                <div class="twocol">
+                    <div>
+                        <label>Número de CI</label>
+                        <input id="r-ci"
+                               type="text"
+                               placeholder="Ej.: 5123456">
+                    </div>
+
+                    <div>
+                        <label>Número de celular</label>
+                        <input id="r-celular"
+                               type="tel"
+                               placeholder="Ej.: 0981 123 123">
+                    </div>
+                </div>
+
+                <label>Correo electrónico</label>
+                <input id="r-email"
+                       type="email"
+                       placeholder="Ej.: correo@email.com">
+
+                <label>Contraseña</label>
+                <input id="r-password"
+                       type="password"
+                       placeholder="Mínimo 6 caracteres">
+
+                <button class="primary full" onclick="register()">
+                    Crear cuenta
+                </button>
+
+                <p id="register-msg"></p>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- =========================================================
+         APLICACIÓN: SOLO SE MUESTRA DESPUÉS DEL LOGIN
+         ========================================================= -->
+    <div id="app" class="hidden">
+
+        <!-- NAVBAR -->
+        <nav>
+            <button class="brand" onclick="view('home')">
+                ⚽ <strong>CanchaYa</strong>
+            </button>
+
+            <div class="navlinks">
+                <button onclick="view('home')">Inicio</button>
+                <button onclick="view('canchas')">Canchas</button>
+                <button onclick="view('eventos')">Eventos</button>
+                <button onclick="view('panel')">Mi Panel</button>
+
+                <button id="admin-nav"
+                        class="hidden"
+                        onclick="view('admin')">
+                    Administración
+                </button>
+            </div>
+
+            <div class="usernav">
+                <span id="hello"></span>
+
+                <button class="danger" onclick="logout()">
+                    Cerrar sesión
+                </button>
+            </div>
+        </nav>
+
+        <main>
+
+            <!-- INICIO -->
+            <section id="v-home" class="page">
+                <div class="hero">
+                    <div>
+                        <span class="tag">Reservas deportivas</span>
+
+                        <h1>
+                            Reservá tu cancha
+                            <br>
+                            <em>de forma fácil.</em>
+                        </h1>
+
+                        <p>
+                            Consultá disponibilidad, elegí tu cancha y reservá horarios de
+                            Fútbol 5 y Fútbol 7 en pocos minutos.
+                        </p>
+
+                        <button class="primary" onclick="view('canchas')">
+                            Ver canchas
+                        </button>
+                    </div>
+
+                    <div class="hero-card">
+                        <span class="tag">Tu próximo partido</span>
+
+                        <h2>Elegí cancha, fecha y horario</h2>
+
+                        <p>
+                            Administrá tus reservas y tus datos personales desde el apartado
+                            Mi Panel.
+                        </p>
+
+                        <button class="green" onclick="view('canchas')">
+                            Reservar una cancha
+                        </button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- CANCHAS: — GET /api/canchas con fetch() -->
+            <section id="v-canchas" class="page hidden">
+                <span class="tag">Instalaciones</span>
+                <h1>Canchas disponibles</h1>
+                <p class="muted">
+                    Datos obtenidos desde la API de CanchaYa mediante una solicitud GET.
+                </p>
+
+                <div class="filters">
+                    <button class="secondary active" data-filtro-cancha onclick="filtrarCanchas('all', this)">
+                        Todas
+                    </button>
+                    <button class="secondary" data-filtro-cancha onclick="filtrarCanchas('FUTBOL5', this)">
+                        Fútbol 5
+                    </button>
+                    <button class="secondary" data-filtro-cancha onclick="filtrarCanchas('FUTBOL7', this)">
+                        Fútbol 7
+                    </button>
+                </div>
+
+                <!-- Estados requeridos: carga, éxito y error -->
+                <div id="cancha-estado"
+                     class="box muted"
+                     role="status"
+                     aria-live="polite">
+                    Ingresá a esta vista para consultar las canchas.
+                </div>
+
+                <!-- Tarjetas creadas desde el JSON recibido -->
+                <div id="cancha-list" class="cards"></div>
+            </section>
+
+            <!-- EVENTOS -->
+            <section id="v-eventos" class="page hidden">
+                <span class="tag">Actividades deportivas</span>
+
+                <h1>Eventos y torneos</h1>
+
+                <p class="muted">
+                    Consultá los próximos eventos disponibles en CanchaYa.
+                </p>
+
+                <div id="event-list" class="cards two"></div>
+            </section>
+
+            <!-- MI PANEL -->
+            <section id="v-panel" class="page hidden">
+
+                <div class="panel-head">
+                    <div>
+                        <span class="tag">Mi cuenta</span>
+
+                        <h1 id="profile-title"></h1>
+
+                        <p id="profile-email" class="muted"></p>
+                    </div>
+
+                    <button class="edit" onclick="toggleProfile()">
+                        ✏ Editar datos
+                    </button>
+                </div>
+
+                <!-- FORMULARIO DE EDICIÓN -->
+                <div id="profile-edit" class="box hidden">
+                    <h2>Editar datos personales</h2>
+
+                    <div class="twocol">
+                        <div>
+                            <label>Nombre</label>
+                            <input id="p-nombre" type="text">
+                        </div>
+
+                        <div>
+                            <label>Apellido</label>
+                            <input id="p-apellido" type="text">
+                        </div>
+                    </div>
+
+                    <div class="twocol">
+                        <div>
+                            <label>Número de celular</label>
+                            <input id="p-celular" type="tel">
+                        </div>
+
+                        <div>
+                            <label>Correo electrónico</label>
+                            <input id="p-email" type="email">
+                        </div>
+                    </div>
+
+                    <label>Número de CI (no puede ser modificado)</label>
+                    <input id="p-ci" type="text" disabled>
+
+                    <button class="primary" onclick="saveProfile()">
+                        Guardar cambios
+                    </button>
+
+                    <p id="profile-msg"></p>
+                </div>
+
+                <!-- CAMBIO DE CONTRASEÑA -->
+                <div class="box security">
+                    <h2>Seguridad</h2>
+
+                    <div class="twocol">
+                        <div>
+                            <label>Contraseña actual</label>
+                            <input id="old-pass" type="password">
+                        </div>
+
+                        <div>
+                            <label>Nueva contraseña</label>
+                            <input id="new-pass" type="password">
+                        </div>
+                    </div>
+
+                    <label>Confirmar nueva contraseña</label>
+                    <input id="confirm-pass" type="password">
+
+                    <button class="secondary" onclick="changePassword()">
+                        Actualizar contraseña
+                    </button>
+
+                    <p id="pass-msg"></p>
+                </div>
+
+                <h2 class="section-title">Mis reservas e historial</h2>
+
+                <div id="reservation-list" class="reservations"></div>
+            </section>
+
+            <!-- ADMIN -->
+            <section id="v-admin" class="page hidden">
+
+                <div id="admin-denied" class="box">
+                    Esta sección es exclusiva para administradores.
+                </div>
+
+                <div id="admin-content" class="hidden">
+
+                    <span class="tag">Administración</span>
+
+                    <h1>Panel de control</h1>
+
+                    <div id="stats" class="stats"></div>
+
+                    <div class="admin-tabs">
+                        <button onclick="adminTab('canchas')">Canchas</button>
+                        <button onclick="adminTab('eventos')">Eventos</button>
+                        <button onclick="adminTab('usuarios')">Usuarios</button>
+                        <button onclick="adminTab('reservas')">Reservas</button>
+                        <button onclick="adminTab('reportes')">Reportes</button>
+                    </div>
+
+                    <!-- ADMIN CANCHAS -->
+                    <div id="a-canchas" class="admin-section">
+                        <div class="section-row">
+                            <h2>Canchas</h2>
+
+                            <button class="primary" onclick="openCancha()">
+                                + Nueva cancha
+                            </button>
+                        </div>
+
+                        <div id="admin-canchas" class="cards"></div>
+                    </div>
+
+                    <!-- ADMIN EVENTOS -->
+                    <div id="a-eventos" class="admin-section hidden">
+                        <div class="section-row">
+                            <h2>Eventos</h2>
+
+                            <button class="primary" onclick="openEvento()">
+                                + Crear evento
+                            </button>
+                        </div>
+
+                        <div id="admin-eventos"></div>
+                    </div>
+
+                    <!-- ADMIN USUARIOS -->
+                    <div id="a-usuarios" class="admin-section hidden">
+                        <h2>Usuarios</h2>
+
+                        <input id="user-search"
+                               class="search"
+                               type="text"
+                               placeholder="Buscar por nombre, CI, correo o celular"
+                               oninput="searchUsers()">
+
+                        <div id="admin-users" class="tablebox"></div>
+                    </div>
+
+                    <!-- ADMIN RESERVAS -->
+                    <div id="a-reservas" class="admin-section hidden">
+                        <h2>Reservas</h2>
+
+                        <div id="admin-reservas" class="tablebox"></div>
+                    </div>
+
+                    <!-- ADMIN REPORTES -->
+                    <div id="a-reportes" class="admin-section hidden box">
+                        <h2>Generar reporte PDF</h2>
+
+                        <p class="muted">
+                            Elegí un período para generar un reporte de reservas y eventos.
+                        </p>
+
+                        <div class="twocol">
+                            <div>
+                                <label>Fecha desde</label>
+                                <input id="report-from" type="date">
+                            </div>
+
+                            <div>
+                                <label>Fecha hasta</label>
+                                <input id="report-to" type="date">
+                            </div>
+                        </div>
+
+                        <button class="primary" onclick="reportPDF()">
+                            Generar reporte PDF
+                        </button>
+                    </div>
+
+                </div>
+            </section>
+
+        </main>
+
+        <!-- MODAL -->
+        <div id="modal" class="modal hidden">
+            <div class="modal-bg" onclick="closeModal()"></div>
+
+            <div class="modal-box">
+                <button class="close" onclick="closeModal()">×</button>
+
+                <div id="modal-content"></div>
+            </div>
+        </div>
+
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
